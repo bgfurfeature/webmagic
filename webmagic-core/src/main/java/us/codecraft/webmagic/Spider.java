@@ -275,8 +275,10 @@ public class Spider implements Runnable, Task {
         return this;
     }
 
+    // 本类下的变量初始化（pipeline, downloader, ... 等）
     protected void initComponent() {
         if (downloader == null) {
+            // 初始化page下载器
             this.downloader = new HttpClientDownloader();
         }
         if (pipelines.isEmpty()) {
@@ -331,6 +333,7 @@ public class Spider implements Runnable, Task {
                 });
             }
         }
+        // 设置爬虫状态为停止
         stat.set(STAT_STOPPED);
         // release some resources
         if (destroyWhenExit) {
@@ -360,12 +363,14 @@ public class Spider implements Runnable, Task {
             if (statNow == STAT_RUNNING) {
                 throw new IllegalStateException("Spider is already running!");
             }
+            // 设置爬虫运行状态为running
             if (stat.compareAndSet(statNow, STAT_RUNNING)) {
                 break;
             }
         }
     }
 
+    // 关闭所有可关闭的
     public void close() {
         destroyEach(downloader);
         destroyEach(pageProcessor);
@@ -373,6 +378,7 @@ public class Spider implements Runnable, Task {
         for (Pipeline pipeline : pipelines) {
             destroyEach(pipeline);
         }
+        // 关闭线程池
         threadPool.shutdown();
     }
 

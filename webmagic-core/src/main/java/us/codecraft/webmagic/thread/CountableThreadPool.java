@@ -22,6 +22,7 @@ public class CountableThreadPool {
 
     private AtomicInteger threadAlive = new AtomicInteger();
 
+    // 线程同步锁
     private ReentrantLock reentrantLock = new ReentrantLock();
 
     private Condition condition = reentrantLock.newCondition();
@@ -30,7 +31,7 @@ public class CountableThreadPool {
         this.threadNum = threadNum;
         this.executorService = Executors.newFixedThreadPool(threadNum);
     }
-
+    // 自定义计数线程池
     public CountableThreadPool(int threadNum, ExecutorService executorService) {
         this.threadNum = threadNum;
         this.executorService = executorService;
@@ -55,25 +56,31 @@ public class CountableThreadPool {
 
         if (threadAlive.get() >= threadNum) {
             try {
+                // 上锁
                 reentrantLock.lock();
                 while (threadAlive.get() >= threadNum) {
                     try {
+                        // 等待
                         condition.await();
                     } catch (InterruptedException e) {
                     }
                 }
             } finally {
+                // 释放锁
                 reentrantLock.unlock();
             }
         }
+        // 活跃线程数增加
         threadAlive.incrementAndGet();
         executorService.execute(new Runnable() {
             @Override
             public void run() {
                 try {
+                    // 线程运行
                     runnable.run();
                 } finally {
                     try {
+                        // 线程运行完修正活跃线程数
                         reentrantLock.lock();
                         threadAlive.decrementAndGet();
                         condition.signal();
